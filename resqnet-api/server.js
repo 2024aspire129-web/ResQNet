@@ -1,11 +1,10 @@
 import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
 
-console.log("ENV CHECK:",process.env.MANGO_URI);
-
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
+import mongoose from "mongoose";
 import connectDB from "./db.js";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -25,14 +24,34 @@ import hospitalRoutes from "./routes/hospitalRoute.js";
 import responerRoutes from "./routes/responderRoute.js";
 import emergencyRoute from "./routes/emergencyRoute.js";
 
-connectDB();
+const normalizeOrigin = (origin) => origin?.trim().replace(/\/$/, "");
+const envOrigins = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map(normalizeOrigin)
+  .filter(Boolean)
+  .flatMap((origin) => (origin.startsWith("http") ? [origin] : [`https://${origin}`, `http://${origin}`]));
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  ...envOrigins,
+];
+
+const corsOrigin = (origin, callback) => {
+  if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
+    return callback(null, true);
+  }
+
+  return callback(new Error("Not allowed by CORS"));
+};
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
+    origin: corsOrigin,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   },
 });
 
@@ -43,6 +62,7 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
+    origin: corsOrigin,
     credentials: true,
   })
 );
@@ -54,11 +74,20 @@ app.use(express.urlencoded({ extended: true }));
 //app.use(bodyParser.json());
 app.use(cookieParser());
 
-connectDB();
-
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
+
+app.get("/health", (_req, res) => {
+  const isDatabaseConnected = mongoose.connection.readyState === 1;
+
+  res.status(isDatabaseConnected ? 200 : 503).json({
+    success: isDatabaseConnected,
+    api: "running",
+    database: isDatabaseConnected ? "connected" : "disconnected",
+  });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/shelter", shelterRoutes);
@@ -82,11 +111,17 @@ io.on("connection", (socket) => {
   });
 });
 
-// app.use((err, _req, res, _next) => {
-//   const status = err.statusCode || 500;
-//   res.status(status).json({ message: err.message || 'Server Error' });
-// });
+app.use((err, _req, res, _next) => {
+  const status = err.statusCode || 500;
+  res.status(status).json({ message: err.message || "Server Error" });
+});
 
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`API is running on port ${PORT}`));
+connectDB()
+  .then(() => {
+    server.listen(PORT, () => console.log(`API is running on port ${PORT}`));
+  })
+  .catch(() => {
+    process.exit(1);
+  });

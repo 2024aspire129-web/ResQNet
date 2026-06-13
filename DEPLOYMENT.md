@@ -1,6 +1,6 @@
 # ResQNet Deployment
 
-## Backend
+## Backend on Render
 Deploy `resqnet-api` as a Node web service.
 
 Build command:
@@ -28,8 +28,8 @@ Health check path:
 /health
 ```
 
-## Frontend
-Deploy `resqnet-client` as a static Vite site.
+## Frontend on Vercel
+Deploy `resqnet-client` as a Vite project.
 
 Build command:
 ```bash
@@ -48,3 +48,8 @@ VITE_API_URL=https://your-backend-domain.com
 
 ## Important
 Do not commit real `.env` files. Add the live frontend URL to backend `FRONTEND_URL`, and add the live backend URL to frontend `VITE_API_URL`.
+
+Recommended deploy order:
+1. Deploy backend on Render with MongoDB Atlas `MONGO_URI`.
+2. Deploy frontend on Vercel with `VITE_API_URL` set to the Render backend URL.
+3. Update Render `FRONTEND_URL` to the final Vercel frontend URL.

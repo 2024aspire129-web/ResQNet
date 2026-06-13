@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: resqnet-api
+    env: node
+    rootDir: resqnet-api
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: NODEMAILER_USER
+        sync: false
+      - key: NODEMAILER_PASS
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false

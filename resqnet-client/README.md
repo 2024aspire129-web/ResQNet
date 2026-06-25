@@ -20,4 +20,8 @@
 **Frontend:** ReactJS, Redux, TailwindCSS, Flowbite React  
 **Backend:** NodeJS, ExpressJS, MongoDB, WebSocket, Stripe
 
+<<<<<<< HEAD
 Updated from main branch
+=======
+**ResQNet** is updated from feature brnch.
+>>>>>>> feature-conflict

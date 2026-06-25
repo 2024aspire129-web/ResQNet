@@ -20,3 +20,4 @@
 **Frontend:** ReactJS, Redux, TailwindCSS, Flowbite React  
 **Backend:** NodeJS, ExpressJS, MongoDB, WebSocket, Stripe
 
+**ResQNet** is updated from feature brnch.
